@@ -16,6 +16,7 @@
             --glass: rgba(255, 255, 255, 0.15);
             --dark-text: #5d4037;
             --bg-ultra: linear-gradient(135deg, #fff9e3 0%, #ffe4b5 50%, #ffd194 100%);
+            --ios-nav: rgba(255, 255, 255, 0.7);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -28,136 +29,106 @@
             height: 100vh;
         }
 
-        /* App Shell */
-        #app-interface {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 1s ease;
-        }
-
-        #app-interface.active { opacity: 1; pointer-events: auto; }
-
-        /* Header de la App */
-        .app-header {
-            padding: 40px 25px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-profile { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); padding: 2px; }
-        .user-info h2 { font-family: 'Cinzel', serif; font-size: 0.9rem; letter-spacing: 2px; }
-        .user-info p { font-size: 0.6rem; text-transform: uppercase; color: var(--primary); font-weight: 700; }
-
-        /* Pantalla de Inicio (Splash) */
+        /* --- Pantalla de Inicio (Splash) --- */
         #splash-screen {
-            position: fixed;
-            inset: 0;
-            background: #fff;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: fixed; inset: 0; background: #fff; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: transform 1s cubic-bezier(0.8, 0, 0.2, 1);
         }
 
         .loader-circle {
             width: 80px; height: 80px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1.5s linear infinite;
-            margin-bottom: 20px;
+            border: 2px solid #f3f3f3; border-top: 2px solid var(--primary); border-radius: 50%;
+            animation: spin 1.5s linear infinite; margin-bottom: 20px;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .btn-enter {
-            padding: 15px 40px;
-            border: 1px solid var(--primary);
-            background: transparent;
-            font-family: 'Cinzel', serif;
-            letter-spacing: 4px;
-            cursor: pointer;
-            margin-top: 30px;
-            transition: 0.3s;
+            padding: 15px 40px; border: 1px solid var(--primary); background: transparent;
+            font-family: 'Cinzel', serif; letter-spacing: 4px; cursor: pointer;
+            margin-top: 30px; transition: all 0.5s; text-transform: uppercase;
         }
+        .btn-enter:hover { background: var(--primary); color: white; box-shadow: 0 0 20px rgba(212, 160, 2, 0.3); }
 
-        /* Mensajes Deslizantes (Cards) */
+        /* --- Interfaz de la App (Shell) --- */
+        #app-interface {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; flex-direction: column;
+            opacity: 0; pointer-events: none;
+            transition: opacity 1s ease 0.5s;
+        }
+        #app-interface.active { opacity: 1; pointer-events: auto; }
+
+        /* Header de la App */
+        .app-header {
+            padding: 40px 25px 20px; display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%); z-index: 100;
+        }
+        .user-profile { display: flex; align-items: center; gap: 12px; }
+        .avatar { 
+            width: 45px; height: 45px; border-radius: 50%; 
+            border: 2px solid var(--primary); padding: 2px;
+            background: url('https://cdn-icons-png.flaticon.com/512/3667/3667231.png') center/cover;
+        }
+        .user-info h2 { font-family: 'Cinzel', serif; font-size: 0.9rem; letter-spacing: 2px; }
+        .user-info p { font-size: 0.6rem; text-transform: uppercase; color: var(--primary); font-weight: 700; }
+
+        /* Contenedor del Mensaje (Card) */
         #message-card {
-            position: absolute;
-            top: 45%; left: 50%;
+            position: absolute; top: 45%; left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
             width: 85%; max-width: 400px;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 30px;
-            padding: 40px 25px;
-            text-align: center;
+            background: var(--glass); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 30px;
+            padding: 40px 25px; text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-            opacity: 0;
+            opacity: 0; visibility: hidden;
             transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 500;
         }
-
-        #message-card.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
+        #message-card.show { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
         .quote-icon { font-size: 3rem; color: var(--primary); opacity: 0.3; font-family: 'serif'; }
         .main-msg { font-family: 'Playfair Display', serif; font-size: 1.6rem; line-height: 1.4; margin: 20px 0; }
 
-        /* Barra de Navegación inferior (Estilo iOS) */
+        /* --- Navegación Inferior --- */
         .bottom-nav {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border-radius: 35px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(138, 109, 59, 0.15);
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; height: 70px;
+            background: var(--ios-nav); backdrop-filter: blur(20px);
+            border-radius: 35px; display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 30px rgba(138, 109, 59, 0.15); z-index: 600;
         }
-
         .nav-item {
             display: flex; flex-direction: column; align-items: center;
             color: #999; font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
             cursor: pointer; transition: 0.3s;
         }
-
         .nav-item.active { color: var(--primary); }
         .nav-dot { width: 5px; height: 5px; background: var(--primary); border-radius: 50%; margin-top: 5px; opacity: 0; }
         .nav-item.active .nav-dot { opacity: 1; }
 
-        /* Barra de Progreso Circular para el Soplido */
+        /* Indicador de Soplido (Breath) */
         .breath-indicator {
-            position: absolute;
-            top: -25px;
-            background: white;
-            padding: 10px 20px;
-            border-radius: 20px;
+            position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+            background: white; padding: 12px 24px; border-radius: 20px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--primary);
-            letter-spacing: 1px;
+            font-size: 0.75rem; font-weight: 700; color: var(--primary);
+            letter-spacing: 2px; text-transform: uppercase;
         }
 
-        /* Bóveda de Recuerdos */
+        /* --- Bóveda de Recuerdos --- */
         #vault-screen {
-            position: fixed; inset: 0; background: white; z-index: 2000;
-            padding: 40px 20px; display: none; overflow-y: auto;
+            position: fixed; inset: 0; background: #fff; z-index: 2000;
+            padding: 80px 25px 120px; display: none; overflow-y: auto;
+            transform: translateX(100%); transition: transform 0.8s ease;
+        }
+        #vault-screen.active { display: block; transform: translateX(0%); }
+        .vault-item {
+            padding: 25px; background: #fdfaf0; border-radius: 20px;
+            border-left: 5px solid var(--primary); font-size: 1rem;
+            font-family: 'Playfair Display', serif; line-height: 1.5;
+            margin-bottom: 20px; box-shadow: 0 5px 10px rgba(0,0,0,0.02);
         }
 
     </style>
@@ -167,14 +138,14 @@
     <div id="splash-screen">
         <div class="loader-circle"></div>
         <h1 style="font-family: 'Cinzel'; font-size: 1.2rem; letter-spacing: 5px;">Kiara Universe</h1>
-        <p style="font-size: 0.7rem; color: #999; margin-top: 10px;">PROYECTADO POR JHOAN BORGES</p>
+        <p style="font-size: 0.7rem; color: #999; margin-top: 10px;">DESARROLLADO POR JHOAN BORGES</p>
         <button class="btn-enter" onclick="startApp()">INICIAR EXPERIENCIA</button>
     </div>
 
     <div id="app-interface">
         <header class="app-header">
             <div class="user-profile">
-                <div class="avatar" style="background: url('https://cdn-icons-png.flaticon.com/512/3667/3667231.png') center/cover;"></div>
+                <div class="avatar"></div>
                 <div class="user-info">
                     <h2>Kiara</h2>
                     <p id="status-text">Explorando el Jardín</p>
@@ -182,7 +153,7 @@
             </div>
             <div class="stats-icon" style="text-align: right;">
                 <p style="font-size: 0.5rem; letter-spacing: 1px;">SECRETOS</p>
-                <p id="counter" style="font-weight: 800; color: var(--primary);">0/10</p>
+                <p id="counter" style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">0/10</p>
             </div>
         </header>
 
@@ -193,11 +164,11 @@
         </div>
 
         <nav class="bottom-nav">
-            <div class="nav-item active" onclick="switchTab('garden')">
+            <div id="nav-garden" class="nav-item active" onclick="switchTab('garden')">
                 <span>Jardín</span>
                 <div class="nav-dot"></div>
             </div>
-            <div class="nav-item" onclick="switchTab('vault')">
+            <div id="nav-vault" class="nav-item" onclick="switchTab('vault')">
                 <span>Bóveda</span>
                 <div class="nav-dot"></div>
             </div>
@@ -207,9 +178,9 @@
     </div>
 
     <div id="vault-screen">
-        <h2 style="font-family: 'Cinzel'; margin-bottom: 30px; text-align: center;">Tus Secretos Guardados</h2>
-        <div id="vault-list" style="display: grid; gap: 15px;"></div>
-        <button class="btn-enter" style="width: 100%;" onclick="switchTab('garden')">VOLVER AL JARDÍN</button>
+        <h2 style="font-family: 'Cinzel'; margin-bottom: 40px; text-align: center; color: var(--dark-text); letter-spacing: 2px;">Tus Secretos Guardados</h2>
+        <div id="vault-list"></div>
+        <button class="btn-enter" style="width: 100%; margin-top: 40px;" onclick="switchTab('garden')">VOLVER AL JARDÍN</button>
     </div>
 
     <script>
@@ -233,9 +204,7 @@
 
         function setup() {
             let canvas = createCanvas(windowWidth, windowHeight);
-            canvas.style('position', 'fixed');
-            canvas.style('top', '0');
-            canvas.style('z-index', '1');
+            canvas.style('position', 'fixed'); canvas.style('top', '0'); canvas.style('z-index', '1');
 
             petalImg = createGraphics(40, 40);
             petalImg.noStroke();
@@ -318,19 +287,22 @@
         }
 
         function switchTab(tab) {
-            const gardenHud = document.getElementById('breath-hint');
             const vault = document.getElementById('vault-screen');
+            const gardenNav = document.getElementById('nav-garden');
+            const vaultNav = document.getElementById('nav-vault');
             
             if(tab === 'vault') {
                 vault.style.display = 'block';
+                setTimeout(() => vault.classList.add('active'), 10);
+                gardenNav.classList.remove('active');
+                vaultNav.classList.add('active');
                 renderVault();
             } else {
-                vault.style.display = 'none';
+                vault.classList.remove('active');
+                setTimeout(() => vault.style.display = 'none', 800);
+                gardenNav.classList.add('active');
+                vaultNav.classList.remove('active');
             }
-            
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.toggle('active', el.innerText.toLowerCase().includes(tab));
-            });
         }
 
         function renderVault() {
@@ -338,7 +310,7 @@
             list.innerHTML = "";
             revealedIndexes.forEach(idx => {
                 let div = document.createElement('div');
-                div.style.cssText = "padding: 20px; background: #fdfaf0; border-radius: 15px; border-left: 4px solid var(--primary); font-size: 0.9rem; font-family: 'Playfair Display';";
+                div.className = 'vault-item';
                 div.innerText = `"${SECRETS[idx]}"`;
                 list.appendChild(div);
             });
@@ -388,15 +360,17 @@
         }
 
         class Spark {
-            constructor() { this.p = createVector(random(width), random(height)); this.o = random(100); }
+            constructor(x, y) { this.p = createVector(x || random(width), y || random(height)); this.o = random(100); this.life = 255; }
             update() {
-                let b = map(sin(frameCount*0.04 + this.o), -1, 1, 0, 180);
+                this.life -= (this.p.x ? 4 : 0);
+                let b = map(sin(frameCount*0.04 + this.o), -1, 1, 0, (this.p.x ? this.life : 180));
                 noStroke(); fill(255, 255, 255, b); circle(this.p.x, this.p.y, random(1, 3));
             }
         }
 
         function windowResized() { resizeCanvas(windowWidth, windowHeight); }
         function mouseMoved() { if(started) sparks.push(new Spark(mouseX, mouseY)); }
+        function touchMoved() { if(started) sparks.push(new Spark(mouseX, mouseY)); return false; }
     </script>
 </body>
 </html>
