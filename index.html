@@ -115,6 +115,200 @@
             <div id="progress-bar"></div>
         </div>
     </div>
+<script>
+    let petals = [], flowers = [], sparks = [];
+    let mic, started = false, progress = 0;
+    let isRevealing = false, petalImg;
+    let revealedIndexes = [];
+
+    const GOLDEN_HOUR_IDX = 0; 
+    const SECRETS = [
+        "Tal como dice la canción de Golden Hour, no necesito ninguna luz para verte brillar. Es tu hora dorada. Tú desaceleras el tiempo en tu hora dorada",
+        "Tu risa es el mejor soplido de vida que conozco",
+        "En este jardín, tú eres la única flor que nunca se marchita",
+        "Gracias por ser mi paz en los días de tormenta",
+        "Cada pétalo es un «te amo» que el viento te lleva",
+        "Tú no solo ves la luz, tú la creas",
+        "Eres mi recordatorio diario de que la vida es bonita",
+        "Un mundo sin tu amarillo sería un mundo en blanco y negro",
+        "Me encanta cómo eres: sin filtros, solo tú",
+        "Eres el secreto mejor guardado de este jardín"
+    ];
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        
+        // Renderizado del pétalo con degradado para realismo
+        petalImg = createGraphics(30, 30);
+        petalImg.noStroke();
+        for(let r = 30; r > 0; r -= 2) {
+            let inter = map(r, 0, 30, 255, 180);
+            petalImg.fill(255, 215, 0, 150);
+            petalImg.ellipse(15, 15, r/1.5, r);
+        }
+
+        for (let i = 0; i < 400; i++) petals.push(new Petal());
+        for (let i = 0; i < 12; i++) flowers.push(new Flower(i * (width/11)));
+        for (let i = 0; i < 50; i++) sparks.push(new Spark());
+    }
+
+    // Función para iniciar (puedes llamarla con un botón o clic)
+    function mousePressed() {
+        if (!started) {
+            userStartAudio().then(() => {
+                mic = new p5.AudioIn();
+                mic.start();
+                started = true;
+                document.getElementById('hud').style.opacity = '1';
+            });
+        }
+    }
+
+    function draw() {
+        // Fondo cinemático
+        clear();
+        if (!started) {
+            fill(138, 109, 59);
+            textAlign(CENTER);
+            textSize(16);
+            text("TOCA PARA DESBLOQUEAR LA MAGIA", width/2, height/2);
+            return;
+        }
+
+        let vol = mic.getLevel();
+        let blowing = vol > 0.05;
+        let force = map(vol, 0.05, 0.4, 0, 35);
+
+        if (!isRevealing) {
+            if (blowing) {
+                progress += 1.2;
+                if (progress >= 100) revealSecret();
+            } else {
+                progress = max(0, progress - 0.4);
+            }
+            document.getElementById('progress-bar').style.width = progress + "%";
+        }
+
+        // Dibujar elementos con profundidad
+        for (let s of sparks) s.update();
+        for (let f of flowers) f.update(force);
+        
+        let t = frameCount * 0.005;
+        for (let p of petals) {
+            p.applyWind(blowing, force, t);
+            p.update();
+            p.display();
+        }
+    }
+
+    function revealSecret() {
+        isRevealing = true;
+        let available = SECRETS.filter((_, i) => !revealedIndexes.includes(i));
+        if (available.length === 0) revealedIndexes = []; // Reiniciar si se acaban
+        
+        let randomIdx;
+        do { randomIdx = floor(random(SECRETS.length)); } while (revealedIndexes.includes(randomIdx));
+        revealedIndexes.push(randomIdx);
+        
+        let displayTime = (randomIdx === GOLDEN_HOUR_IDX) ? 12000 : 8000;
+        showMsg(SECRETS[randomIdx], displayTime);
+    }
+
+    function showMsg(txt, time) {
+        let view = document.getElementById('text-reveal');
+        view.innerText = txt;
+        view.classList.add('visible');
+        document.getElementById('hud').style.opacity = '0';
+        
+        setTimeout(() => {
+            view.classList.remove('visible');
+            setTimeout(() => {
+                isRevealing = false;
+                progress = 0;
+                document.getElementById('hud').style.opacity = '1';
+            }, 2500);
+        }, time);
+    }
+
+    class Petal {
+        constructor() { this.reset(true); }
+        reset(full) {
+            this.pos = createVector(random(width), full ? random(height) : -30);
+            this.vel = createVector(random(-0.5, 0.5), random(1, 2));
+            this.acc = createVector(0, 0);
+            this.angle = random(TWO_PI);
+            this.rotS = random(-0.02, 0.02);
+            this.size = random(0.4, 0.8);
+            this.off = random(1000);
+        }
+        applyWind(blowing, f, t) {
+            let n = noise(this.pos.x * 0.002, this.pos.y * 0.002, t + this.off);
+            this.acc.add(createVector(map(n, 0, 1, -0.2, 0.2), 0.02));
+            if (blowing) {
+                this.acc.add(createVector(random(-1, 1), -f * 0.5));
+            }
+        }
+        update() {
+            this.vel.add(this.acc);
+            this.vel.limit(3);
+            this.pos.add(this.vel);
+            this.acc.mult(0);
+            this.angle += this.rotS;
+            if (this.pos.y > height + 20) this.reset(false);
+            if (this.pos.x > width + 20) this.pos.x = -20;
+            if (this.pos.x < -20) this.pos.x = width + 20;
+        }
+        display() {
+            push();
+            translate(this.pos.x, this.pos.y);
+            rotate(this.angle);
+            scale(this.size);
+            image(petalImg, -15, -15);
+            pop();
+        }
+    }
+
+    class Flower {
+        constructor(x) { 
+            this.x = x; 
+            this.h = random(100, 200); 
+            this.ph = random(PI); 
+            this.ang = 0; 
+        }
+        update(f) {
+            this.ang = lerp(this.ang, sin(frameCount*0.015 + this.ph)*0.15 + f*0.02, 0.05);
+            push();
+            translate(this.x, height);
+            rotate(this.ang);
+            // Tallo con sombra
+            stroke(60, 80, 40); strokeWeight(4); line(0,0,0,-this.h);
+            stroke(100, 150, 80); strokeWeight(2); line(0,0,0,-this.h);
+            
+            // Flor Realista
+            translate(0, -this.h);
+            noStroke();
+            // Pétalos con volumen
+            fill(255, 200, 0);
+            for(let i=0; i<8; i++){
+                push(); rotate(i*PI/4); ellipse(15, 0, 30, 12); pop();
+            }
+            // Centro del girasol
+            fill(60, 40, 20); circle(0, 0, 15);
+            fill(80, 60, 30); circle(0, 0, 8);
+            pop();
+        }
+    }
+
+    class Spark {
+        constructor() { this.p = createVector(random(width), random(height)); this.o = random(100); }
+        update() {
+            let b = map(sin(frameCount*0.05 + this.o), -1, 1, 0, 200);
+            noStroke(); fill(255, 255, 255, b); circle(this.p.x, this.p.y, random(1, 3));
+        }
+    }
+
+    function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+</script>
 
 </body>
 </html>
