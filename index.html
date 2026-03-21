@@ -3,116 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Deep Space - Kiara</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400&display=swap" rel="stylesheet">
+    <title>Deep Universe - Kiara</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,100;1,200&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --space-bg: #000205; /* Negro casi absoluto */
-            --star-core: #ffffff;
-            --star-glow: rgba(255, 255, 255, 0.9);
-            --nebula-blue: rgba(20, 40, 100, 0.1);
-            --nebula-purple: rgba(80, 20, 80, 0.08);
-            --text-color: #f0f0f0;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
-            background-color: var(--space-bg);
+            margin: 0;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+            background: #000205; /* El negro del espacio profundo */
+            color: white;
             font-family: 'Montserrat', sans-serif;
-            color: var(--text-color);
-            user-select: none;
-            touch-action: none;
+            cursor: crosshair;
         }
 
-        /* --- El Motor del Universo (Canvas) --- */
-        #deep-space-canvas {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            filter: blur(0.5px); /* Suavizado sutil para realismo */
-        }
-
-        /* --- Interfaz Cinemática (Overlays) --- */
-        #ui-layer {
+        #canvas-container {
             position: fixed;
             inset: 0;
-            z-index: 100;
-            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Capa de atmósfera y mensajes */
+        #interface {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
             display: flex;
             justify-content: center;
             align-items: center;
-            text-align: center;
-            padding: 30px;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
         }
 
-        /* Mensaje de Constelación */
-        #message-display {
-            width: 85%;
-            max-width: 650px;
+        #message-box {
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
             opacity: 0;
-            filter: blur(15px) scale(0.9);
-            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1), 
-                        filter 2s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 2s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 101;
+            filter: blur(20px);
+            transition: all 2.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #message-display.visible {
+
+        #message-box.active {
             opacity: 1;
-            filter: blur(0px) scale(1.05);
+            filter: blur(0px);
             transform: scale(1.05);
         }
 
-        .space-text {
-            font-size: 2rem;
-            font-weight: 100; /* Peso extra fino */
+        .text-cosmico {
+            font-size: 1.8rem;
+            font-weight: 100;
+            letter-spacing: 2px;
             line-height: 1.6;
-            text-shadow: 0 0 20px rgba(255,255,255,0.7),
-                         0 0 40px rgba(255,255,255,0.4);
-            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.4);
+            font-style: italic;
         }
 
-        .from-jhoan {
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.3);
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            margin-top: 40px;
-            font-weight: 300;
-        }
-
-        /* HUD Minimalista */
-        .hud {
+        .hint {
             position: absolute;
             bottom: 40px;
             font-size: 0.6rem;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             text-transform: uppercase;
-            opacity: 0.2;
-            font-weight: 400;
+            opacity: 0.3;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="deep-space-canvas"></canvas>
+    <div id="canvas-container">
+        <canvas id="spaceCanvas"></canvas>
+    </div>
 
-    <div id="ui-layer">
-        <div id="message-display">
-            <p class="space-text" id="main-text"></p>
-            <p class="from-jhoan">— Deep Space Kiara —</p>
+    <div id="interface">
+        <div id="message-box">
+            <p id="main-text" class="text-cosmico"></p>
         </div>
-        <div class="hud">Mueve el cielo para descubrir sus mensajes</div>
+        <div class="hint">Toca el vacío para conectar con ella</div>
     </div>
 
     <script>
-        // --- BASE DE DATOS DE PENSAMIENTOS CÓSMICOS ---
-        const ALL_MESSAGES = [
+        const canvas = document.getElementById('spaceCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let stars = [], clouds = [];
+        let mouse = { x: 0, y: 0, active: false };
+
+        const MESSAGES = [
             "Para mí siempre has sido tú, desde el principio.",
             "Llevamos tiempo que no hablamos ☺️ pero siempre estás presente.",
             "Me gusta que me digas así ☺️ (tarroncito de miel)",
@@ -120,178 +96,118 @@
             "Me alegra mucho verte feliz, eso es lo que más importa.",
             "Cada vez que veo una foto tuya me sacas una sonrisa.",
             "Eres mi lugar seguro, Kiara.",
-            "No importa el tiempo que pase, siempre serás mi persona favorita.",
-            "Tu sonrisa ilumina mi cielo más que todas estas estrellas juntas.",
-            "Eres el deseo que pedí y que se hizo realidad.",
-            "Te amo de aquí al infinito pasando por cada galaxia.",
-            "Siempre has querido que sea yo, y yo siempre he querido que seas tú.",
-            "Me gusta cómo me haces sentir cuando hablamos.",
-            "Contigo el mundo se ve mucho mejor.",
-            "Eres mi cómplice en todo.",
-            "Eres luz en mis días más oscuros.",
-            "Te amo con toda mi alma y mi ser."
+            "Tu sonrisa ilumina mi cielo más que todas estas estrellas.",
+            "Te amo de aquí al infinito pasando por cada galaxia."
         ];
+        let msgIdx = 0;
 
-        let messagePool = [...ALL_MESSAGES];
-        let currentIdx = -1;
-        let canvas, ctx;
-        let stars = [], dust = [];
-        let mouseX = 0, mouseY = 0;
+        function init() {
+            resize();
+            createSpace();
+            animate();
+        }
 
-        // --- MOTOR FOTORREALISTA ---
-        function initDeepSpace() {
-            canvas = document.getElementById('deep-space-canvas');
-            ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
 
-            // 1. Generar Polvo Cósmico (Irregular)
-            for (let i = 0; i < 2000; i++) {
-                dust.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 0.7,
-                    alpha: Math.random() * 0.3,
-                    color: `rgba(200, 220, 255, ${Math.random() * 0.2})` // Tinte azul sutil
-                });
-            }
-
-            // 2. Generar Estrellas Principales (Variadas)
-            for (let i = 0; i < 150; i++) {
+        function createSpace() {
+            // Estrellas con diferentes temperaturas (colores reales)
+            const colors = ['#ffffff', '#fff4ea', '#f8fbff', '#fdf2ff', '#fffdfe'];
+            for(let i=0; i<400; i++) {
                 stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.5 + 0.2, // 0.2px a 1.7px
-                    glow: Math.random() * 15 + 5,
-                    twinkleSpeed: Math.random() * 0.05 + 0.01,
-                    twinklePhase: Math.random() * Math.PI * 2,
-                    brightness: Math.random() * 0.5 + 0.5 // 0.5 a 1.0
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    z: Math.random() * width,
+                    size: Math.random() * 1.2 + 0.1,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    twinkle: Math.random() * 0.02
                 });
             }
 
-            // Iniciar ciclo de renderizado
-            requestAnimationFrame(renderSpace);
+            // Nubes de gas (Nebulosas realistas con degradados irregulares)
+            for(let i=0; i<5; i++) {
+                clouds.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    r: Math.random() * width * 0.8 + 200,
+                    color: i % 2 === 0 ? 'rgba(20, 30, 80, 0.04)' : 'rgba(60, 20, 60, 0.03)'
+                });
+            }
         }
 
-        // --- CICLO DE RENDERIZADO (El secreto del fotorrealismo) ---
-        function renderSpace(time) {
-            // Fondo de espacio profundo
-            ctx.fillStyle = '#000103'; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Aplicar Nebulosas Volumétricas (Gradientes complejos con blend mode)
-            ctx.globalCompositeOperation = 'lighter';
-            
-            // Nebulosa Azul
-            let gradBlue = ctx.createRadialGradient(canvas.width * 0.3, canvas.height * 0.3, 0, canvas.width * 0.3, canvas.height * 0.3, canvas.width * 0.6);
-            gradBlue.addColorStop(0, 'rgba(20, 40, 100, 0.08)');
-            gradBlue.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradBlue;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Nebulosa Púrpura
-            let gradPurp = ctx.createRadialGradient(canvas.width * 0.8, canvas.height * 0.7, 0, canvas.width * 0.8, canvas.height * 0.7, canvas.width * 0.5);
-            gradPurp.addColorStop(0, 'rgba(80, 20, 80, 0.06)');
-            gradPurp.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradPurp;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        function drawNebula() {
+            ctx.globalCompositeOperation = 'screen';
+            clouds.forEach(c => {
+                let g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+                g.addColorStop(0, c.color);
+                g.addColorStop(1, 'transparent');
+                ctx.fillStyle = g;
+                ctx.fillRect(0,0,width,height);
+            });
             ctx.globalCompositeOperation = 'source-over';
-
-            // Dibujar Polvo Estelar (Parallax suave)
-            let moveX = mouseX * 0.003;
-            let moveY = mouseY * 0.003;
-            for (let p of dust) {
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = p.alpha;
-                ctx.beginPath();
-                ctx.arc(p.x + moveX, p.y + moveY, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1.0;
-
-            // Dibujar Estrellas Principales (Twinkle orgánico y Glow)
-            let starMoveX = mouseX * 0.01; // Parallax más fuerte
-            let starMoveY = mouseY * 0.01;
-            for (let s of stars) {
-                let twinkle = Math.sin(time * s.twinkleSpeed + s.twinklePhase) * 0.3 + 0.7;
-                let currentBrightness = s.brightness * twinkle;
-                
-                // Halo de la estrella (Glow)
-                ctx.shadowBlur = s.glow * twinkle;
-                ctx.shadowColor = `rgba(255, 255, 255, ${currentBrightness})`;
-                ctx.fillStyle = `rgba(255, 255, 255, ${currentBrightness})`;
-                
-                ctx.beginPath();
-                ctx.arc(s.x + starMoveX, s.y + starMoveY, s.size * twinkle, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Reset shadow para no afectar el resto
-                ctx.shadowBlur = 0;
-            }
-
-            requestAnimationFrame(renderSpace);
         }
 
-        // --- LÓGICA DE MENSAJES (Ciclo Infinito) ---
-        function getNextMessage() {
-            currentIdx = (currentIdx + 1) % ALL_MESSAGES.length;
-            return ALL_MESSAGES[currentIdx];
+        function animate() {
+            // El secreto del realismo: No limpiar el canvas a negro puro, 
+            // dejar un rastro mínimo para suavizar el movimiento.
+            ctx.fillStyle = '#000205';
+            ctx.fillRect(0, 0, width, height);
+
+            drawNebula();
+
+            stars.forEach(s => {
+                // Parallax 3D
+                let x = (s.x - width/2) * (width/s.z) + width/2;
+                let y = (s.y - height/2) * (width/s.z) + height/2;
+                let size = (1 - s.z/width) * s.size * 2;
+                
+                // Efecto de parpadeo realista
+                let b = Math.sin(Date.now() * s.twinkle) * 0.5 + 0.5;
+                ctx.fillStyle = s.color;
+                ctx.globalAlpha = b;
+                
+                // Dibujo de estrella con "glow" sutil
+                ctx.beginPath();
+                ctx.arc(x + (mouse.x * 0.02), y + (mouse.y * 0.02), size, 0, Math.PI*2);
+                ctx.fill();
+
+                // Movimiento hacia adelante
+                s.z -= 0.3;
+                if(s.z <= 0) s.z = width;
+            });
+
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(animate);
         }
 
-        function rotateMessages() {
-            const textReveal = document.getElementById('message-display');
-            const mainText = document.getElementById('main-text');
+        function showMessage() {
+            const box = document.getElementById('message-box');
+            const text = document.getElementById('main-text');
             
-            const message = getNextMessage();
-            
-            // Ocultar mensaje anterior (con blur)
-            textReveal.classList.remove('visible');
+            box.classList.remove('active');
             
             setTimeout(() => {
-                mainText.innerText = `“${message}”`;
-                textReveal.classList.add('visible');
-            }, 2000); // Tiempo para que se desvanezca el anterior
+                text.innerText = MESSAGES[msgIdx];
+                msgIdx = (msgIdx + 1) % MESSAGES.length;
+                box.classList.add('active');
+            }, 1000);
         }
 
-        // --- INTERACCIÓN Y MOVIMIENTO (Parallax) ---
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX - window.innerWidth / 2;
-            mouseY = e.clientY - window.innerHeight / 2;
-        });
-
-        // Táctil para móvil
-        document.addEventListener('touchmove', (e) => {
-            const touch = e.touches[0];
-            mouseX = touch.clientX - window.innerWidth / 2;
-            mouseY = touch.clientY - window.innerHeight / 2;
-        }, { passive: true });
-
-        // Cambiar mensaje al tocar/clicar en cualquier parte
-        window.addEventListener('click', (e) => {
-            // Evitar que el clic en el HUD dispare el mensaje si tuviéramos botones
-            if (e.target.closest('.hud')) return;
-            rotateMessages();
-        });
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousedown', showMessage);
         window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.hud')) return;
-            rotateMessages();
+            e.preventDefault();
+            showMessage();
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX - width/2;
+            mouse.y = e.clientY - height/2;
         });
 
-        // --- INICIAR ---
-        window.addEventListener('load', () => {
-            initDeepSpace();
-            // Mostrar el primer mensaje automáticamente
-            setTimeout(rotateMessages, 1000);
-        });
-
-        window.addEventListener('resize', () => {
-            if(canvas) {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                // Podríamos regenerar las estrellas, pero es mejor dejarlas así para no "parpadear"
-            }
-        });
+        init();
     </script>
 </body>
 </html>
