@@ -2,186 +2,262 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golden Hour - Kiara</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@1,400;1,700&family=Quicksand:wght@300;500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kiara - Universe</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@200;400;600&family=Playfair+Display:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
-    
+
     <style>
         :root {
-            --gold-light: #fff5cc;
-            --gold-main: #d4a017;
-            --gold-deep: #8a6d3b;
-            --sunset: linear-gradient(180deg, #fffae5 0%, #ffe4b5 50%, #ffd194 100%);
+            --primary: #d4a017;
+            --accent: #FFD700;
+            --glass: rgba(255, 255, 255, 0.15);
+            --dark-text: #5d4037;
+            --bg-ultra: linear-gradient(135deg, #fff9e3 0%, #ffe4b5 50%, #ffd194 100%);
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            margin: 0;
-            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg-ultra);
+            color: var(--dark-text);
             overflow: hidden;
-            background: var(--sunset);
-            font-family: 'Quicksand', sans-serif;
-            user-select: none;
-            touch-action: none;
+            height: 100vh;
         }
 
-        #starter-btn {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--gold-main);
-            color: var(--gold-deep);
-            font-family: 'Cinzel', serif;
-            letter-spacing: 5px;
-            cursor: pointer;
-            z-index: 2000;
-            transition: all 0.8s ease;
-            text-transform: uppercase;
-        }
-
-        #starter-btn:hover {
-            background: var(--gold-main);
-            color: white;
-            box-shadow: 0 0 30px rgba(212, 160, 2, 0.4);
-        }
-
-        #ambient-light {
+        /* App Shell */
+        #app-interface {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at 50% -20%, rgba(255, 230, 100, 0.3) 0%, transparent 80%);
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #message-view {
-            position: absolute;
-            top: 45%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            max-width: 700px;
-            text-align: center;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .message-text {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.2rem;
-            color: var(--gold-deep);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
             opacity: 0;
-            filter: blur(15px);
-            transform: scale(0.9);
-            transition: all 2.5s cubic-bezier(0.4, 0, 0.2, 1);
-            text-shadow: 2px 2px 15px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            transition: opacity 1s ease;
         }
 
-        .message-text.visible {
-            opacity: 1;
-            filter: blur(0px);
-            transform: scale(1.05);
+        #app-interface.active { opacity: 1; pointer-events: auto; }
+
+        /* Header de la App */
+        .app-header {
+            padding: 40px 25px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .hud {
-            position: absolute;
-            bottom: 50px;
-            width: 100%;
-            text-align: center;
-            z-index: 150;
-            transition: opacity 1s;
+        .user-profile { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); padding: 2px; }
+        .user-info h2 { font-family: 'Cinzel', serif; font-size: 0.9rem; letter-spacing: 2px; }
+        .user-info p { font-size: 0.6rem; text-transform: uppercase; color: var(--primary); font-weight: 700; }
+
+        /* Pantalla de Inicio (Splash) */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 1s cubic-bezier(0.8, 0, 0.2, 1);
         }
 
-        .instruction {
-            color: var(--gold-deep);
-            font-size: 0.7rem;
+        .loader-circle {
+            width: 80px; height: 80px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-enter {
+            padding: 15px 40px;
+            border: 1px solid var(--primary);
+            background: transparent;
+            font-family: 'Cinzel', serif;
             letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            font-weight: 500;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: 0.3s;
         }
 
-        .progress-track {
-            width: 150px;
-            height: 2px;
-            background: rgba(138, 109, 59, 0.1);
-            margin: 0 auto;
-            border-radius: 5px;
-            overflow: hidden;
+        /* Mensajes Deslizantes (Cards) */
+        #message-card {
+            position: absolute;
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 85%; max-width: 400px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 30px;
+            padding: 40px 25px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        #progress-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--gold-main);
-            box-shadow: 0 0 10px var(--gold-main);
-            transition: width 0.4s;
+        #message-card.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .quote-icon { font-size: 3rem; color: var(--primary); opacity: 0.3; font-family: 'serif'; }
+        .main-msg { font-family: 'Playfair Display', serif; font-size: 1.6rem; line-height: 1.4; margin: 20px 0; }
+
+        /* Barra de Navegación inferior (Estilo iOS) */
+        .bottom-nav {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 35px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(138, 109, 59, 0.15);
         }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #999; font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s;
+        }
+
+        .nav-item.active { color: var(--primary); }
+        .nav-dot { width: 5px; height: 5px; background: var(--primary); border-radius: 50%; margin-top: 5px; opacity: 0; }
+        .nav-item.active .nav-dot { opacity: 1; }
+
+        /* Barra de Progreso Circular para el Soplido */
+        .breath-indicator {
+            position: absolute;
+            top: -25px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        /* Bóveda de Recuerdos */
+        #vault-screen {
+            position: fixed; inset: 0; background: white; z-index: 2000;
+            padding: 40px 20px; display: none; overflow-y: auto;
+        }
+
     </style>
 </head>
 <body>
 
-    <button id="starter-btn" onclick="initPro()">Entrar al Atardecer</button>
-
-    <div id="ambient-light"></div>
-    
-    <div id="message-view">
-        <div id="text-reveal" class="message-text"></div>
+    <div id="splash-screen">
+        <div class="loader-circle"></div>
+        <h1 style="font-family: 'Cinzel'; font-size: 1.2rem; letter-spacing: 5px;">Kiara Universe</h1>
+        <p style="font-size: 0.7rem; color: #999; margin-top: 10px;">PROYECTADO POR JHOAN BORGES</p>
+        <button class="btn-enter" onclick="startApp()">INICIAR EXPERIENCIA</button>
     </div>
 
-    <div id="hud" class="hud" style="opacity: 0;">
-        <div class="instruction">Respira sobre el jardín</div>
-        <div class="progress-track">
-            <div id="progress-bar"></div>
+    <div id="app-interface">
+        <header class="app-header">
+            <div class="user-profile">
+                <div class="avatar" style="background: url('https://cdn-icons-png.flaticon.com/512/3667/3667231.png') center/cover;"></div>
+                <div class="user-info">
+                    <h2>Kiara</h2>
+                    <p id="status-text">Explorando el Jardín</p>
+                </div>
+            </div>
+            <div class="stats-icon" style="text-align: right;">
+                <p style="font-size: 0.5rem; letter-spacing: 1px;">SECRETOS</p>
+                <p id="counter" style="font-weight: 800; color: var(--primary);">0/10</p>
+            </div>
+        </header>
+
+        <div id="message-card">
+            <div class="quote-icon">“</div>
+            <p id="text-reveal" class="main-msg"></p>
+            <p style="font-size: 0.7rem; color: var(--primary); letter-spacing: 2px;">GOLDEN HOUR</p>
         </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('garden')">
+                <span>Jardín</span>
+                <div class="nav-dot"></div>
+            </div>
+            <div class="nav-item" onclick="switchTab('vault')">
+                <span>Bóveda</span>
+                <div class="nav-dot"></div>
+            </div>
+            
+            <div id="breath-hint" class="breath-indicator">SOPLA SUAVE</div>
+        </nav>
+    </div>
+
+    <div id="vault-screen">
+        <h2 style="font-family: 'Cinzel'; margin-bottom: 30px; text-align: center;">Tus Secretos Guardados</h2>
+        <div id="vault-list" style="display: grid; gap: 15px;"></div>
+        <button class="btn-enter" style="width: 100%;" onclick="switchTab('garden')">VOLVER AL JARDÍN</button>
     </div>
 
     <script>
         let petals = [], flowers = [], sparks = [];
         let mic, started = false, progress = 0;
         let isRevealing = false, petalImg;
-        let revealedIndexes = [];
+        let revealedIndexes = JSON.parse(localStorage.getItem('kiara_vault') || "[]");
 
-        const GOLDEN_HOUR_IDX = 0; 
         const SECRETS = [
             "Tal como dice la canción de Golden Hour, no necesito ninguna luz para verte brillar. Es tu hora dorada. Tú desaceleras el tiempo en tu hora dorada",
-            "Tu risa es el mejor soplido de vida que conozco",
-            "En este jardín, tú eres la única flor que nunca se marchita",
-            "Gracias por ser mi paz en los días de tormenta",
-            "Cada pétalo es un «te amo» que el viento te lleva",
-            "Tú no solo ves la luz, tú la creas",
-            "Eres mi recordatorio diario de que la vida es bonita",
-            "Un mundo sin tu amarillo sería un mundo en blanco y negro",
-            "Me encanta cómo eres: sin filtros, solo tú",
-            "Eres el secreto mejor guardado de este jardín"
+            "Tu risa es la frecuencia más hermosa de este universo",
+            "Eres el color más brillante en mi día más gris",
+            "Gracias por elegirme para caminar a tu lado",
+            "Cada soplido en este jardín es un suspiro mío por ti",
+            "Tú no eres una opción, eres mi prioridad absoluta",
+            "Incluso en silencio, tu alma dice cosas hermosas",
+            "Eres el 'te amo' más sincero que he pronunciado",
+            "Mi paz mental tiene tu nombre escrito",
+            "Eres mi hogar, sin importar dónde estemos"
         ];
 
         function setup() {
-            createCanvas(windowWidth, windowHeight);
-            petalImg = createGraphics(30, 30);
+            let canvas = createCanvas(windowWidth, windowHeight);
+            canvas.style('position', 'fixed');
+            canvas.style('top', '0');
+            canvas.style('z-index', '1');
+
+            petalImg = createGraphics(40, 40);
             petalImg.noStroke();
-            for(let r = 30; r > 0; r -= 2) {
-                petalImg.fill(255, 215, 0, 150);
-                petalImg.ellipse(15, 15, r/1.5, r);
+            for(let r = 40; r > 0; r -= 4) {
+                petalImg.fill(212, 160, 23, 100 + r*2);
+                petalImg.ellipse(20, 20, r/1.8, r);
             }
 
-            for (let i = 0; i < 400; i++) petals.push(new Petal());
-            for (let i = 0; i < 12; i++) flowers.push(new Flower(i * (width/11)));
+            for (let i = 0; i < 350; i++) petals.push(new Petal());
+            for (let i = 0; i < 8; i++) flowers.push(new Flower(i * (width/7)));
             for (let i = 0; i < 40; i++) sparks.push(new Spark());
+            
+            document.getElementById('counter').innerText = `${revealedIndexes.length}/${SECRETS.length}`;
         }
 
-        function initPro() {
+        function startApp() {
             userStartAudio().then(() => {
                 mic = new p5.AudioIn();
                 mic.start();
                 started = true;
-                document.getElementById('starter-btn').style.opacity = '0';
-                setTimeout(() => document.getElementById('starter-btn').style.display = 'none', 1000);
-                document.getElementById('hud').style.opacity = '1';
+                document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
+                document.getElementById('app-interface').classList.add('active');
             });
         }
 
@@ -190,27 +266,23 @@
             if (!started) return;
 
             let vol = mic.getLevel();
-            let blowing = vol > 0.05;
-            let force = map(vol, 0.05, 0.4, 0, 35);
+            let blowing = vol > 0.04;
+            let force = map(vol, 0.04, 0.5, 0, 40);
 
             if (!isRevealing) {
                 if (blowing) {
-                    progress += 1.2;
+                    progress += 1.5;
+                    document.getElementById('breath-hint').innerText = "SOPLANDO...";
                     if (progress >= 100) revealSecret();
                 } else {
-                    progress = max(0, progress - 0.4);
+                    progress = max(0, progress - 0.5);
+                    document.getElementById('breath-hint').innerText = "SOPLA SUAVE";
                 }
-                document.getElementById('progress-bar').style.width = progress + "%";
             }
 
-            for (let i = sparks.length - 1; i >= 0; i--) {
-                sparks[i].update();
-                if (sparks[i].life <= 0) sparks.splice(i, 1);
-            }
-            
+            for (let s of sparks) s.update();
             for (let f of flowers) f.update(force);
-            
-            let t = frameCount * 0.005;
+            let t = frameCount * 0.006;
             for (let p of petals) {
                 p.applyWind(blowing, force, t);
                 p.update();
@@ -220,121 +292,111 @@
 
         function revealSecret() {
             isRevealing = true;
-            let available = SECRETS.filter((_, i) => !revealedIndexes.includes(i));
-            if (available.length === 0) revealedIndexes = [];
+            let available = SECRETS.map((_, i) => i).filter(i => !revealedIndexes.includes(i));
+            if (available.length === 0) available = [Math.floor(random(SECRETS.length))];
             
-            let randomIdx;
-            do { randomIdx = floor(random(SECRETS.length)); } while (revealedIndexes.includes(randomIdx));
-            revealedIndexes.push(randomIdx);
+            let idx = random(available);
+            if(!revealedIndexes.includes(idx)) {
+                revealedIndexes.push(idx);
+                localStorage.setItem('kiara_vault', JSON.stringify(revealedIndexes));
+            }
             
-            let displayTime = (randomIdx === GOLDEN_HOUR_IDX) ? 12000 : 8000;
-            showMsg(SECRETS[randomIdx], displayTime);
+            showMsg(SECRETS[idx]);
         }
 
-        function showMsg(txt, time) {
-            let view = document.getElementById('text-reveal');
-            view.innerText = txt;
-            view.classList.add('visible');
-            document.getElementById('hud').style.opacity = '0';
+        function showMsg(txt) {
+            const card = document.getElementById('message-card');
+            const textEl = document.getElementById('text-reveal');
+            textEl.innerText = txt;
+            card.classList.add('show');
+            document.getElementById('counter').innerText = `${revealedIndexes.length}/${SECRETS.length}`;
             
             setTimeout(() => {
-                view.classList.remove('visible');
-                setTimeout(() => {
-                    isRevealing = false;
-                    progress = 0;
-                    document.getElementById('hud').style.opacity = '1';
-                }, 2500);
-            }, time);
+                card.classList.remove('show');
+                setTimeout(() => { isRevealing = false; progress = 0; }, 1000);
+            }, 9000);
         }
 
-        function mouseMoved() {
-            if(started && frameCount % 2 == 0) {
-                sparks.push(new Spark(mouseX, mouseY));
+        function switchTab(tab) {
+            const gardenHud = document.getElementById('breath-hint');
+            const vault = document.getElementById('vault-screen');
+            
+            if(tab === 'vault') {
+                vault.style.display = 'block';
+                renderVault();
+            } else {
+                vault.style.display = 'none';
             }
+            
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.innerText.toLowerCase().includes(tab));
+            });
         }
 
-        function touchMoved() {
-            if(started) {
-                sparks.push(new Spark(mouseX, mouseY));
-            }
-            return false;
+        function renderVault() {
+            const list = document.getElementById('vault-list');
+            list.innerHTML = "";
+            revealedIndexes.forEach(idx => {
+                let div = document.createElement('div');
+                div.style.cssText = "padding: 20px; background: #fdfaf0; border-radius: 15px; border-left: 4px solid var(--primary); font-size: 0.9rem; font-family: 'Playfair Display';";
+                div.innerText = `"${SECRETS[idx]}"`;
+                list.appendChild(div);
+            });
         }
 
+        // --- Clases de Física ---
         class Petal {
             constructor() { this.reset(true); }
             reset(full) {
-                this.pos = createVector(random(width), full ? random(height) : -30);
-                this.vel = createVector(random(-0.5, 0.5), random(1, 2));
+                this.pos = createVector(random(width), full ? random(height) : -40);
+                this.vel = createVector(random(-1, 1), random(1, 2.5));
                 this.acc = createVector(0, 0);
                 this.angle = random(TWO_PI);
-                this.rotS = random(-0.02, 0.02);
-                this.size = random(0.4, 0.8);
+                this.rotS = random(-0.03, 0.03);
+                this.size = random(0.3, 0.7);
                 this.off = random(1000);
             }
             applyWind(blowing, f, t) {
-                let n = noise(this.pos.x * 0.002, this.pos.y * 0.002, t + this.off);
-                this.acc.add(createVector(map(n, 0, 1, -0.2, 0.2), 0.02));
-                if (blowing) this.acc.add(createVector(random(-1, 1), -f * 0.5));
+                let n = noise(this.pos.x * 0.003, this.pos.y * 0.003, t + this.off);
+                this.acc.add(createVector(map(n, 0, 1, -0.3, 0.3), 0.02));
+                if (blowing) this.acc.add(createVector(random(-2, 2), -f * 0.6));
             }
             update() {
                 this.vel.add(this.acc);
-                this.vel.limit(3);
+                this.vel.limit(3.5);
                 this.pos.add(this.vel);
                 this.acc.mult(0);
                 this.angle += this.rotS;
-                if (this.pos.y > height + 20) this.reset(false);
+                if (this.pos.y > height + 40) this.reset(false);
             }
             display() {
-                push();
-                translate(this.pos.x, this.pos.y);
-                rotate(this.angle);
-                scale(this.size);
-                image(petalImg, -15, -15);
-                pop();
+                push(); translate(this.pos.x, this.pos.y); rotate(this.angle); scale(this.size);
+                image(petalImg, -20, -20); pop();
             }
         }
 
         class Flower {
-            constructor(x) { 
-                this.x = x; 
-                this.h = random(120, 220); 
-                this.ph = random(PI); 
-                this.ang = 0; 
-            }
+            constructor(x) { this.x = x; this.h = random(150, 250); this.ph = random(PI); this.ang = 0; }
             update(f) {
-                this.ang = lerp(this.ang, sin(frameCount*0.015 + this.ph)*0.15 + f*0.02, 0.05);
-                push();
-                translate(this.x, height);
-                rotate(this.ang);
-                stroke(40, 60, 20); strokeWeight(4); line(0,0,0,-this.h);
-                stroke(80, 120, 60); strokeWeight(2); line(0,0,0,-this.h);
-                translate(0, -this.h);
-                noStroke();
-                fill(255, 200, 0);
-                for(let i=0; i<8; i++){
-                    push(); rotate(i*PI/4); ellipse(15, 0, 30, 12); pop();
-                }
-                fill(60, 40, 20); circle(0, 0, 15);
-                pop();
+                this.ang = lerp(this.ang, sin(frameCount*0.015 + this.ph)*0.2 + f*0.02, 0.05);
+                push(); translate(this.x, height); rotate(this.ang);
+                stroke(60, 80, 40); strokeWeight(5); line(0,0,0,-this.h);
+                translate(0, -this.h); noStroke();
+                fill(255, 215, 0); for(let i=0; i<10; i++){ push(); rotate(i*PI/5); ellipse(18, 0, 35, 14); pop(); }
+                fill(80, 60, 30); circle(0, 0, 20); pop();
             }
         }
 
         class Spark {
-            constructor(x, y) {
-                this.p = createVector(x || random(width), y || random(height));
-                this.v = createVector(random(-1,1), random(-1,1));
-                this.life = 255;
-            }
+            constructor() { this.p = createVector(random(width), random(height)); this.o = random(100); }
             update() {
-                this.p.add(this.v);
-                this.life -= 4;
-                noStroke(); 
-                fill(255, 255, 255, this.life); 
-                circle(this.p.x, this.p.y, random(1, 4));
+                let b = map(sin(frameCount*0.04 + this.o), -1, 1, 0, 180);
+                noStroke(); fill(255, 255, 255, b); circle(this.p.x, this.p.y, random(1, 3));
             }
         }
 
         function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+        function mouseMoved() { if(started) sparks.push(new Spark(mouseX, mouseY)); }
     </script>
 </body>
 </html>
