@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Kiara - Un Jardín Eterno</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;500&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #d4a017;
+            --soft-yellow: #fffdf0;
+            --text-brown: #8a6d3b;
+            --sunflower: #FFD700;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: var(--soft-yellow);
+            font-family: 'Quicksand', sans-serif;
+            user-select: none;
+        }
+
+        #ui-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Pantalla de Inicio / Girasol */
+        #start {
+            position: fixed;
+            inset: 0;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            transition: opacity 1.5s;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .sunflower-icon {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+            animation: sway 4s ease-in-out infinite;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .dedication {
+            color: var(--gold);
+            letter-spacing: 3px;
+            font-size: 1.1rem;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .from-jhoan {
+            color: var(--text-brown);
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-top: 10px;
+        }
+
+        /* Pantalla de Instrucciones */
+        #instructions {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-brown);
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .instr-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+
+        .btn-ready {
+            margin-top: 40px;
+            background: var(--gold);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-family: 'Quicksand', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+        }
+
+        /* Resto de la UI */
+        .nav-bar {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(212, 160, 23, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: var(--gold);
+            cursor: pointer;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.active { background: var(--gold); color: white; }
+
+        .garden-hud {
+            position: absolute;
+            top: 80px;
+            width: 100%;
+            text-align: center;
+            transition: opacity 0.5s;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 3px;
+            background: var(--gold);
+            margin: 10px auto;
+            width: 200px;
+            transition: width 0.3s;
+        }
+
+        #message-view {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+            color: var(--text-brown);
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            opacity: 0;
+            transition: opacity 1.5s, transform 1.5s;
+        }
+
+        #message-view.visible { opacity: 1; transform: translate(-50%, -40%); }
+
+        #gallery-view {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 254, 240, 0.98);
+            padding: 100px 40px;
+            overflow-y: auto;
+            display: none;
+            pointer-events: auto;
+            z-index: 200;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto 60px;
+        }
+
+        .gallery-item {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(212, 160, 23, 0.1);
+            color: var(--text-brown);
+            font-style: italic;
+            border-left: 4px solid var(--gold);
+        }
+
+        .close-gallery {
+            display: block;
+            margin: 40px auto;
+            background: var(--gold);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start" onclick="showInstructions()">
+        <div class="sunflower-icon">
+            <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="15" fill="#4b3621" />
+                <g id="petals">
+                    <ellipse cx="50" cy="20" rx="8" ry="18" fill="#FFD700" />
+                    <ellipse cx="50" cy="80" rx="8" ry="18" fill="#FFD700" />
+                    <ellipse cx="20" cy="50" rx="18" ry="8" fill="#FFD700" />
+                    <ellipse cx="80" cy="50" rx="18" ry="8" fill="#FFD700" />
+                    <ellipse cx="30" cy="30" rx="12" ry="12" fill="#FFD700" transform="rotate(45 30 30)" />
+                    <ellipse cx="70" cy="70" rx="12" ry="12" fill="#FFD700" transform="rotate(45 70 70)" />
+                    <ellipse cx="70" cy="30" rx="12" ry="12" fill="#FFD700" transform="rotate(-45 70 30)" />
+                    <ellipse cx="30" cy="70" rx="12" ry="12" fill="#FFD700" transform="rotate(-45 30 70)" />
+                </g>
+            </svg>
+        </div>
+        <p class="dedication">Especialmente para ti</p>
+        <h1 class="from-jhoan">Con mucho amor, de parte de Jhoan</h1>
+        <p style="color: #bbb; margin-top: 40px; font-size: 0.8rem;">(Toca el girasol para entrar)</p>
+    </div>
+
+    <div id="instructions">
+        <p class="instr-text">
+            He creado para ti este jardín eterno... un lugar donde puedes descubrir mensajes ocultos que el viento guarda.<br><br>
+            Para encontrarlos, deberás encender tu micrófono y <b>soplar suavemente</b> los pétalos de las flores amarillas.
+        </p>
+        <button class="btn-ready" onclick="initApp()">Entrar al Jardín</button>
+    </div>
+
+    <div id="ui-container">
+        <div class="nav-bar">
+            <div id="btn-garden" class="nav-btn active" onclick="showTab('garden')">Jardín</div>
+            <div id="btn-gallery" class="nav-btn" onclick="showTab('gallery')">Recuerdos</div>
+        </div>
+
+        <div id="garden-hud" class="garden-hud">
+            <div id="hint" style="color: var(--gold); font-style: italic;">Sopla el jardín...</div>
+            <div id="progress-bar"></div>
+        </div>
+
+        <div id="message-view"></div>
+
+        <div id="gallery-view">
+            <h2 style="text-align: center; color: var(--gold); margin-bottom: 40px;">Tus Secretos Desbloqueados</h2>
+            <div class="gallery-grid" id="gallery-grid"></div>
+            <button class="close-gallery" onclick="showTab('garden')">Volver al Jardín</button>
+        </div>
+    </div>
+
+    <script>
+        // REINICIO DE RECUERDOS PARA EL ESTRENO
+        localStorage.removeItem('kiara_secrets');
+
+        let petals = [], flowers = [], sparks = [];
+        let mic, started = false, progress = 0, currentTab = 'garden';
+        let isRevealing = false, petalImg;
+        let revealedIndexes = [];
+
+        const SECRETS = [
+            "Eres la razón por la que el amarillo es mi color favorito",
+            "Tu risa es el mejor soplido de vida que conozco",
+            "En este jardín, tú eres la única flor que nunca se marchita",
+            "Gracias por ser mi paz en los días de tormenta",
+            "Cada pétalo es un «te amo» que el viento te lleva",
+            "Tú no solo ves la luz, tú la creas",
+            "Eres mi recordatorio diario de que la vida es bonita",
+            "Un mundo sin tu amarillo sería un mundo en blanco y negro",
+            "Me encanta cómo eres: sin filtros, solo tú",
+            "Eres el secreto mejor guardado de este jardín"
+        ];
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            petalImg = createGraphics(20, 20);
+            petalImg.noStroke();
+            petalImg.fill(255, 215, 0, 200);
+            petalImg.beginShape();
+            petalImg.vertex(10, 0);
+            petalImg.bezierVertex(0, 5, 5, 15, 10, 20);
+            petalImg.bezierVertex(15, 15, 20, 5, 10, 0);
+            petalImg.endShape(CLOSE);
+
+            for (let i = 0; i < 500; i++) petals.push(new Petal());
+            for (let i = 0; i < 15; i++) flowers.push(new Flower(i * (width/14)));
+            for (let i = 0; i < 30; i++) sparks.push(new Spark());
+        }
+
+        function showInstructions() {
+            document.getElementById('start').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('start').style.display = 'none';
+                let instr = document.getElementById('instructions');
+                instr.style.display = 'flex';
+                setTimeout(() => instr.style.opacity = '1', 100);
+            }, 1500);
+        }
+
+        function initApp() {
+            userStartAudio().then(() => {
+                mic = new p5.AudioIn();
+                mic.start();
+                started = true;
+                document.getElementById('instructions').style.opacity = '0';
+                setTimeout(() => document.getElementById('instructions').style.display = 'none', 1000);
+                updateGallery();
+            });
+        }
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (tab === 'gallery') {
+                document.getElementById('btn-gallery').classList.add('active');
+                document.getElementById('gallery-view').style.display = 'block';
+                document.getElementById('garden-hud').style.opacity = '0';
+            } else {
+                document.getElementById('btn-garden').classList.add('active');
+                document.getElementById('gallery-view').style.display = 'none';
+                document.getElementById('garden-hud').style.opacity = '1';
+                progress = 0;
+            }
+        }
+
+        function draw() {
+            background(255, 254, 245);
+            if (!started) return;
+
+            let vol = mic.getLevel();
+            let blowing = vol > 0.04;
+            let force = map(vol, 0.04, 0.5, 0, 25);
+
+            if (currentTab === 'garden' && !isRevealing) {
+                if (blowing) {
+                    progress += 0.7;
+                    if (progress >= 100) revealSecret();
+                } else {
+                    progress = max(0, progress - 0.2);
+                }
+                document.getElementById('progress-bar').style.width = progress + "px";
+            }
+
+            for (let f of flowers) f.update(force);
+            for (let s of sparks) s.update();
+            let t = frameCount * 0.01;
+            for (let p of petals) {
+                p.applyWind(blowing, force, t);
+                p.update();
+                p.display();
+            }
+        }
+
+        function revealSecret() {
+            isRevealing = true;
+            let available = SECRETS.filter((_, i) => !revealedIndexes.includes(i));
+            if (available.length === 0) {
+                showMsg("Has descubierto todos los secretos por hoy... Gracias por darle vida a este jardín.");
+                return;
+            }
+            let randomIdx;
+            do { randomIdx = floor(random(SECRETS.length)); } while (revealedIndexes.includes(randomIdx));
+            revealedIndexes.push(randomIdx);
+            localStorage.setItem('kiara_secrets', JSON.stringify(revealedIndexes));
+            updateGallery();
+            showMsg(SECRETS[randomIdx]);
+        }
+
+        function showMsg(txt) {
+            let view = document.getElementById('message-view');
+            view.innerText = txt;
+            view.classList.add('visible');
+            document.getElementById('garden-hud').style.opacity = '0';
+            setTimeout(() => {
+                view.classList.remove('visible');
+                setTimeout(() => {
+                    isRevealing = false;
+                    progress = 0;
+                    document.getElementById('garden-hud').style.opacity = '1';
+                }, 2000);
+            }, 8000);
+        }
+
+        function updateGallery() {
+            let grid = document.getElementById('gallery-grid');
+            grid.innerHTML = "";
+            revealedIndexes.forEach(idx => {
+                let item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerText = `"${SECRETS[idx]}"`;
+                grid.appendChild(item);
+            });
+        }
+
+        class Petal {
+            constructor() { this.reset(true); }
+            reset(full) {
+                this.pos = createVector(random(width), full ? random(height) : -20);
+                this.vel = createVector(random(-1, 1), random(1, 3));
+                this.acc = createVector(0, 0);
+                this.angle = random(TWO_PI);
+                this.rotS = random(-0.05, 0.05);
+                this.size = random(0.5, 1.2);
+                this.off = random(1000);
+                this.landed = false;
+            }
+            applyWind(blowing, f, t) {
+                let n = noise(this.pos.x * 0.005, this.pos.y * 0.005, t + this.off);
+                this.acc.add(createVector(map(n, 0, 1, -0.5, 0.5), 0.05));
+                if (blowing) {
+                    this.acc.add(createVector(random(-2, 2), -f * random(0.5, 1.5)));
+                    this.landed = false;
+                }
+            }
+            update() {
+                if (!this.landed) {
+                    this.vel.add(this.acc);
+                    this.vel.limit(4);
+                    this.pos.add(this.vel);
+                    this.acc.mult(0);
+                    this.angle += this.rotS;
+                    if (this.pos.y > height - 10) { this.pos.y = height - 10; this.landed = true; }
+                }
+                if (this.pos.y < -100) this.pos.y = height + 20;
+                if (this.pos.x > width + 20) this.pos.x = -20;
+                if (this.pos.x < -20) this.pos.x = width + 20;
+            }
+            display() {
+                push();
+                translate(this.pos.x, this.pos.y);
+                rotate(this.angle);
+                scale(this.size);
+                image(petalImg, -10, -10);
+                pop();
+            }
+        }
+
+        class Flower {
+            constructor(x) { this.x = x; this.h = random(60, 140); this.ph = random(PI); this.ang = 0; }
+            update(f) {
+                this.ang = lerp(this.ang, sin(frameCount*0.02 + this.ph)*0.1 + f*0.03, 0.1);
+                push();
+                translate(this.x, height);
+                rotate(this.ang);
+                stroke(100, 150, 80); strokeWeight(3); line(0,0,0,-this.h);
+                noStroke(); fill(255, 230, 80);
+                for(let i=0; i<6; i++){
+                    push(); translate(0,-this.h); rotate(i*PI/3); ellipse(10,0,18,8); pop();
+                }
+                fill(80, 60, 20); circle(0,-this.h, 7);
+                pop();
+            }
+        }
+
+        class Spark {
+            constructor() { this.p = createVector(random(width), random(height)); this.o = random(100); }
+            update() {
+                let b = map(sin(frameCount*0.1 + this.o), -1, 1, 0, 150);
+                noStroke(); fill(255, 255, 255, b); circle(this.p.x, this.p.y, 2);
+            }
+        }
+
+        function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+    </script>
+</body>
+</html>
