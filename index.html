@@ -3,92 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Deep Universe - Kiara</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,100;1,200&display=swap" rel="stylesheet">
+    <title>Cosmic Orb - Kiara</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@100;300;400&display=swap" rel="stylesheet">
     
     <style>
+        :root {
+            --space-bg: radial-gradient(circle at center, #0a0e1a 0%, #030406 100%);
+            --orb-core: #fff5cc;
+            --orb-glow: rgba(212, 160, 23, 0.6);
+            --orb-energy: rgba(255, 215, 0, 0.4);
+            --text-color: #f0f0f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            margin: 0;
+            background: var(--space-bg);
             overflow: hidden;
-            background: #000205; /* El negro del espacio profundo */
-            color: white;
+            width: 100vw;
+            height: 100vh;
             font-family: 'Montserrat', sans-serif;
-            cursor: crosshair;
+            color: var(--text-color);
+            user-select: none;
+            touch-action: none;
         }
 
-        #canvas-container {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-        }
-
-        /* Capa de atmósfera y mensajes */
-        #interface {
-            position: fixed;
-            inset: 0;
+        /* --- El Orbe Central (Glassmorphism + Física) --- */
+        #orb-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
             z-index: 10;
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        #the-orb {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, var(--orb-core) 0%, rgba(255, 255, 255, 0.1) 60%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 50px var(--orb-glow),
+                        0 0 100px var(--orb-energy);
+            cursor: pointer;
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease;
+            animation: orb-float 6s infinite ease-in-out, orb-rotate 20s infinite linear;
+        }
+
+        #the-orb::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            background: radial-gradient(circle at center, transparent 30%, var(--orb-energy) 70%, transparent 100%);
+            border-radius: 50%;
+            filter: blur(15px);
+            opacity: 0.5;
+        }
+
+        #the-orb:active {
+            transform: scale(1.1);
+            box-shadow: 0 0 70px #fff,
+                        0 0 150px var(--orb-energy);
+        }
+
+        /* Animaciones del Orbe */
+        @keyframes orb-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes orb-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Órbitas de Luz */
+        .orbit-particle {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0.2;
             pointer-events: none;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
         }
 
-        #message-box {
-            width: 80%;
-            max-width: 600px;
+        /* --- Interfaz Cinemática (Mensajes) --- */
+        #ui-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            opacity: 0;
-            filter: blur(20px);
-            transition: all 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 30px;
         }
 
-        #message-box.active {
+        /* Mensaje de Constelación */
+        #message-display {
+            width: 85%;
+            max-width: 600px;
+            opacity: 0;
+            filter: blur(15px);
+            transition: opacity 1.5s ease-out, filter 1.5s ease-out, transform 1.5s ease-out;
+            transform: scale(0.9);
+            z-index: 101;
+        }
+        #message-display.visible {
             opacity: 1;
             filter: blur(0px);
-            transform: scale(1.05);
+            transform: scale(1);
         }
 
-        .text-cosmico {
+        .space-text {
             font-size: 1.8rem;
             font-weight: 100;
-            letter-spacing: 2px;
             line-height: 1.6;
-            text-shadow: 0 0 15px rgba(255,255,255,0.4);
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
             font-style: italic;
         }
 
-        .hint {
+        .from-jhoan {
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-top: 40px;
+            font-weight: 300;
+        }
+
+        /* HUD Minimalista */
+        .hud {
             position: absolute;
             bottom: 40px;
             font-size: 0.6rem;
-            letter-spacing: 5px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             opacity: 0.3;
+            pointer-events: auto;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div id="canvas-container">
-        <canvas id="spaceCanvas"></canvas>
-    </div>
-
-    <div id="interface">
-        <div id="message-box">
-            <p id="main-text" class="text-cosmico"></p>
+    <div id="orb-container">
+        <div id="the-orb"></div>
         </div>
-        <div class="hint">Toca el vacío para conectar con ella</div>
+
+    <div id="ui-layer">
+        <div id="message-display">
+            <p class="space-text" id="main-text"></p>
+            <p class="from-jhoan">— Proyecto Kiara —</p>
+        </div>
+        <div class="hud" onclick="rotateMessages()">Toca el orbe o aquí para leer el cielo</div>
     </div>
 
     <script>
-        const canvas = document.getElementById('spaceCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        let stars = [], clouds = [];
-        let mouse = { x: 0, y: 0, active: false };
-
-        const MESSAGES = [
+        // --- BASE DE DATOS DE PENSAMIENTOS CÓSMICOS ---
+        const ALL_MESSAGES = [
             "Para mí siempre has sido tú, desde el principio.",
             "Llevamos tiempo que no hablamos ☺️ pero siempre estás presente.",
             "Me gusta que me digas así ☺️ (tarroncito de miel)",
@@ -96,118 +174,119 @@
             "Me alegra mucho verte feliz, eso es lo que más importa.",
             "Cada vez que veo una foto tuya me sacas una sonrisa.",
             "Eres mi lugar seguro, Kiara.",
-            "Tu sonrisa ilumina mi cielo más que todas estas estrellas.",
-            "Te amo de aquí al infinito pasando por cada galaxia."
+            "No importa el tiempo que pase, siempre serás mi persona favorita.",
+            "Tu sonrisa ilumina mi cielo más que todas estas estrellas juntas.",
+            "Eres el deseo que pedí y que se hizo realidad.",
+            "Te amo de aquí al infinito pasando por cada galaxia.",
+            "Siempre has querido que sea yo, y yo siempre he querido que seas tú.",
+            "Me gusta cómo me haces sentir cuando hablamos.",
+            "Contigo el mundo se ve mucho mejor.",
+            "Eres mi cómplice en todo.",
+            "Eres luz en mis días más oscuros.",
+            "Te amo con toda mi alma y mi ser."
         ];
-        let msgIdx = 0;
 
-        function init() {
-            resize();
-            createSpace();
-            animate();
-        }
+        let messagePool = [...ALL_MESSAGES];
+        let currentIdx = -1;
+        let particles = [];
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
+        // --- INICIALIZACIÓN DEL UNIVERSO ---
+        function initCosmos() {
+            const container = document.getElementById('orb-container');
+            const particleCount = window.innerWidth < 768 ? 50 : 100;
 
-        function createSpace() {
-            // Estrellas con diferentes temperaturas (colores reales)
-            const colors = ['#ffffff', '#fff4ea', '#f8fbff', '#fdf2ff', '#fffdfe'];
-            for(let i=0; i<400; i++) {
-                stars.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    z: Math.random() * width,
-                    size: Math.random() * 1.2 + 0.1,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    twinkle: Math.random() * 0.02
-                });
+            for (let i = 0; i < particleCount; i++) {
+                const p = document.createElement('div');
+                p.className = 'orbit-particle';
+                const size = Math.random() * 2 + 1; // 1px a 3px
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                
+                // Propiedades físicas para la animación
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 150 + 100; // Radio de la órbita
+                const speed = Math.random() * 0.02 + 0.005;
+                
+                p.dataset.angle = angle;
+                p.dataset.distance = distance;
+                p.dataset.speed = speed;
+
+                container.appendChild(p);
+                particles.push(p);
             }
 
-            // Nubes de gas (Nebulosas realistas con degradados irregulares)
-            for(let i=0; i<5; i++) {
-                clouds.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    r: Math.random() * width * 0.8 + 200,
-                    color: i % 2 === 0 ? 'rgba(20, 30, 80, 0.04)' : 'rgba(60, 20, 60, 0.03)'
-                });
+            requestAnimationFrame(animateParticles);
+        }
+
+        // --- MOTOR DE FÍSICA DE PARTÍCULAS ---
+        function animateParticles() {
+            for (let p of particles) {
+                let angle = parseFloat(p.dataset.angle);
+                const distance = parseFloat(p.dataset.distance);
+                const speed = parseFloat(p.dataset.speed);
+                
+                // Actualizar ángulo
+                angle += speed;
+                p.dataset.angle = angle;
+                
+                // Calcular nueva posición (Órbita elíptica sutil)
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance * 0.7; // Elipse chata
+                
+                // Efecto de profundidad (Parallax)
+                const depth = Math.sin(angle);
+                const scale = map(depth, -1, 1, 0.5, 1.2);
+                const alpha = map(depth, -1, 1, 0.1, 0.4);
+                
+                p.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                p.style.opacity = alpha;
+                p.style.zIndex = depth > 0 ? 5 : 15; // Unas pasan por detrás, otras por delante
             }
+            requestAnimationFrame(animateParticles);
         }
 
-        function drawNebula() {
-            ctx.globalCompositeOperation = 'screen';
-            clouds.forEach(c => {
-                let g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
-                g.addColorStop(0, c.color);
-                g.addColorStop(1, 'transparent');
-                ctx.fillStyle = g;
-                ctx.fillRect(0,0,width,height);
-            });
-            ctx.globalCompositeOperation = 'source-over';
+        // --- LÓGICA DE MENSAJES (Ciclo Infinito) ---
+        function getNextMessage() {
+            currentIdx = (currentIdx + 1) % ALL_MESSAGES.length;
+            return ALL_MESSAGES[currentIdx];
         }
 
-        function animate() {
-            // El secreto del realismo: No limpiar el canvas a negro puro, 
-            // dejar un rastro mínimo para suavizar el movimiento.
-            ctx.fillStyle = '#000205';
-            ctx.fillRect(0, 0, width, height);
-
-            drawNebula();
-
-            stars.forEach(s => {
-                // Parallax 3D
-                let x = (s.x - width/2) * (width/s.z) + width/2;
-                let y = (s.y - height/2) * (width/s.z) + height/2;
-                let size = (1 - s.z/width) * s.size * 2;
-                
-                // Efecto de parpadeo realista
-                let b = Math.sin(Date.now() * s.twinkle) * 0.5 + 0.5;
-                ctx.fillStyle = s.color;
-                ctx.globalAlpha = b;
-                
-                // Dibujo de estrella con "glow" sutil
-                ctx.beginPath();
-                ctx.arc(x + (mouse.x * 0.02), y + (mouse.y * 0.02), size, 0, Math.PI*2);
-                ctx.fill();
-
-                // Movimiento hacia adelante
-                s.z -= 0.3;
-                if(s.z <= 0) s.z = width;
-            });
-
-            ctx.globalAlpha = 1;
-            requestAnimationFrame(animate);
-        }
-
-        function showMessage() {
-            const box = document.getElementById('message-box');
-            const text = document.getElementById('main-text');
+        function rotateMessages() {
+            const textReveal = document.getElementById('message-display');
+            const mainText = document.getElementById('main-text');
+            const orb = document.getElementById('the-orb');
             
-            box.classList.remove('active');
+            const message = getNextMessage();
+            
+            // Ocultar mensaje anterior (con blur)
+            textReveal.classList.remove('visible');
+            
+            // Efecto visual en el Orbe
+            orb.style.boxShadow = `0 0 100px #fff, 0 0 200px var(--orb-energy)`;
             
             setTimeout(() => {
-                text.innerText = MESSAGES[msgIdx];
-                msgIdx = (msgIdx + 1) % MESSAGES.length;
-                box.classList.add('active');
-            }, 1000);
+                mainText.innerText = `“${message}”`;
+                textReveal.classList.add('visible');
+                // Volver a la luz normal del orbe
+                orb.style.boxShadow = `0 0 50px var(--orb-glow), 0 0 100px var(--orb-energy)`;
+            }, 1000); // Tiempo para que se desvanezca el anterior
         }
 
-        window.addEventListener('resize', resize);
-        window.addEventListener('mousedown', showMessage);
-        window.addEventListener('touchstart', (e) => {
+        // --- INTERACCIÓN Y MOVIMIENTO (Parallax) ---
+        const map = (n, start1, stop1, start2, stop2) => {
+            return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
+        };
+
+        // Asignar eventos al orbe
+        document.getElementById('the-orb').addEventListener('click', rotateMessages);
+        document.getElementById('the-orb').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            showMessage();
-        });
-        
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX - width/2;
-            mouse.y = e.clientY - height/2;
+            rotateMessages();
         });
 
-        init();
+        // --- INICIAR ---
+        window.addEventListener('load', initCosmos);
+
     </script>
 </body>
 </html>
