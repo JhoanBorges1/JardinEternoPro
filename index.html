@@ -125,24 +125,19 @@
 </div>
 
 <script>
-    // --- CONFIGURACIÓN SUPABASE ---
     const SUPABASE_URL = 'https://cgwyjtykhgrphdnbtcpe.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_Xyd7Os7EhFGC_go-C-jPlA_Jqoj0pfD';
-    
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const loader = document.getElementById('loading-overlay');
 
-    // --- AUTENTICACIÓN ---
     async function handleAuth(type) {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         if(!email || !password) return alert("Rellena los datos");
         loader.style.display = 'flex';
-        
         const { error } = type === 'login' 
             ? await _supabase.auth.signInWithPassword({ email, password })
             : await _supabase.auth.signUp({ email, password });
-            
         loader.style.display = 'none';
         if(error) alert(error.message); else checkUser();
     }
@@ -161,12 +156,12 @@
         }
     }
 
-    // --- GUARDAR DATOS (AQUÍ CORREGIMOS EL NOMBRE A 'Registros') ---
     document.getElementById('registroForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         loader.style.display = 'flex';
         const { data: { user } } = await _supabase.auth.getUser();
         
+        // ¡OJO AQUÍ JHOAN! Usando 'Registros' con R mayúscula
         const { error } = await _supabase.from('Registros').insert([{
             nombre: document.getElementById('nombre').value,
             direccion: document.getElementById('direccion').value,
@@ -181,8 +176,8 @@
         if(error) alert("Error de base de datos: " + error.message); else { e.target.reset(); render(); }
     });
 
-    // --- CARGAR DATOS (AQUÍ TAMBIÉN CORREGIMOS A 'Registros') ---
     async function render() {
+        // ¡OJO AQUÍ TAMBIÉN! Usando 'Registros' con R mayúscula
         const { data } = await _supabase.from('Registros').select('*').order('proxima_cita', { ascending: true });
         const lista = document.getElementById('listaAgenda');
         lista.innerHTML = data?.length ? '' : '<p style="text-align:center;color:gray;font-size:12px;">No hay registros sincronizados</p>';
@@ -190,8 +185,6 @@
         data?.forEach(item => {
             const fecha = new Date(item.proxima_cita).toLocaleString('es-ES', { day:'2-digit', month:'short', hour:'numeric', minute:'2-digit', hour12:true });
             const horaCita = new Date(item.proxima_cita).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            // ESTILO CASCADA JHOAN
             const msg = `hola ${item.nombre}\nespero estés bien\nte escribo para confirmar que pasaré hoy a las ${horaCita}\n¿nos vemos?`;
             
             const div = document.createElement('div');
@@ -208,7 +201,6 @@
             lista.appendChild(div);
         });
     }
-    
     checkUser();
 </script>
 </body>
